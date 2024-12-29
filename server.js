@@ -8,7 +8,11 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL, // z.B., 'http://localhost:3000'
+  })
+);
 app.use(express.json());
 
 // Middleware zum Servieren von statischen Dateien
@@ -39,10 +43,7 @@ app.use((err, req, res, next) => {
 
 // MongoDB Verbindung
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB verbunden');
     const PORT = process.env.PORT || 5000;
