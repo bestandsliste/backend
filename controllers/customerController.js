@@ -4,19 +4,13 @@ const Customer = require('../models/Customer');
 
 exports.loginCustomer = async (req, res) => {
   const { name, password } = req.body;
-
-  // Validierung der Eingabedaten
-  if (!name || !password) {
-    return res
-      .status(400)
-      .json({ message: 'Name und Passwort sind erforderlich' });
-  }
+  console.log('Login-Request erhalten:', { name, password }); // Debugging
 
   try {
     // Kunden suchen
     const customer = await Customer.findOne({ name });
+    console.log('Gefundener Kunde:', customer); // Debugging
 
-    // Passwort überprüfen
     if (customer && (await bcrypt.compare(password, customer.password))) {
       // Token generieren
       const token = jwt.sign({ id: customer._id }, process.env.JWT_SECRET, {
@@ -30,10 +24,11 @@ exports.loginCustomer = async (req, res) => {
         token,
       });
     } else {
+      console.log('Ungültige Anmeldedaten'); // Debugging
       res.status(401).json({ message: 'Ungültige Anmeldedaten' });
     }
   } catch (error) {
-    console.error('Login-Fehler:', error);
+    console.error('Login-Fehler:', error.message); // Logge den genauen Fehler
     res.status(500).json({ message: 'Serverfehler' });
   }
 };
