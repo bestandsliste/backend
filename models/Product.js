@@ -1,20 +1,12 @@
 const mongoose = require('mongoose');
 
-const productSchema = new mongoose.Schema(
-  {
+const productSchema = new mongoose.Schema({
     title: { type: String, required: true },
     image: { type: String, required: true },
-    availability: {
-      type: String,
-      enum: ['auf lager', 'ausverkauft'],
-      default: 'auf lager',
-    },
+    availability: { type: Number, enum: [0, 1], default: 1 }, // 0 = Ausverkauft, 1 = Auf Lager
     price: { type: Number, required: true },
-    // Weitere Felder nach Bedarf
-  },
-  {
+}, {
     timestamps: true,
-  }
-);
+});
 
 module.exports = mongoose.model('Product', productSchema);

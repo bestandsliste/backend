@@ -8,12 +8,11 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL, // z.B., 'http://localhost:3000'
-  })
-);
+app.use(cors());
 app.use(express.json());
+
+// Middleware zum Servieren von statischen Dateien
+app.use('/uploads', express.static('uploads'));
 
 // Beispiel-Route
 app.get('/', (req, res) => {
@@ -23,6 +22,20 @@ app.get('/', (req, res) => {
 // Produkt-Routen
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
+
+// Benutzer-Routen
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
+
+// Bestell-Routen
+const orderRoutes = require('./routes/orderRoutes');
+app.use('/api/orders', orderRoutes);
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({ message: 'Etwas ist schief gelaufen!' });
+});
 
 // MongoDB Verbindung
 mongoose

@@ -10,7 +10,7 @@ exports.getProducts = async (req, res) => {
         }
 
         if (availability && availability !== 'Alle') {
-            query.availability = availability;
+            query.availability = availability === 'auf lager' ? 1 : 0;
         }
 
         const products = await Product.find(query);
