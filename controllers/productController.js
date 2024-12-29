@@ -6,29 +6,16 @@ exports.getProducts = async (req, res) => {
         let query = {};
 
         if (search) {
-            query.title = { $regex: search, $options: 'i' };
+            query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
         }
 
-        if (availability && availability !== 'Alle') {
-            query.availability = availability === 'auf lager' ? 1 : 0;
+        if (availability !== undefined && availability !== '') {
+            query.availability = Number(availability);
         }
 
         const products = await Product.find(query);
         res.json(products);
     } catch (error) {
-        res.status(500).json({ message: 'Serverfehler' });
-    }
-};
-
-exports.getProductById = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (product) {
-            res.json(product);
-        } else {
-            res.status(404).json({ message: 'Produkt nicht gefunden' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Serverfehler' });
+        res.status(500).json({ message: 'Serverfehler beim Abrufen der Produkte' });
     }
 };

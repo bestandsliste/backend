@@ -7,12 +7,29 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
+// Definiere erlaubte Ursprünge
+const allowedOrigins = [
+  'http://localhost:3000', // Lokales Frontend während der Entwicklung
+  'https://bestandsliste.vercel.app', // Produktions-Frontend
+];
+
+// CORS-Konfiguration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // z.B., 'http://localhost:3000'
+    origin: function (origin, callback) {
+      // Erlaube Anfragen ohne Origin (z.B. mobile Apps oder CURL)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          'Die CORS-Richtlinie für diese Seite erlaubt keinen Zugriff von der angegebenen Origin.';
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
   })
 );
+
+// Middleware
 app.use(express.json());
 
 // Middleware zum Servieren von statischen Dateien
@@ -35,7 +52,7 @@ app.use('/api/users', userRoutes);
 const orderRoutes = require('./routes/orderRoutes');
 app.use('/api/orders', orderRoutes);
 
-// Error Handling Middleware
+// Fehlerbehandlung Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send({ message: 'Etwas ist schief gelaufen!' });
