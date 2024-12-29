@@ -1,38 +1,32 @@
 const express = require('express');
-const {
-  registerUser,
-  loginUser,
-  getUserProfile,
-} = require('../controllers/userController');
-const { protect } = require('../middleware/authMiddleware');
+const { loginCustomer, registerCustomer } = require('../controllers/customerController');
 const { body } = require('express-validator');
 
 const router = express.Router();
 
-// Benutzerregistrierung
+// Kundenregistrierung
 router.post(
   '/register',
   [
     body('name').notEmpty().withMessage('Name ist erforderlich'),
-    body('email').isEmail().withMessage('Ungültige E-Mail'),
     body('password')
       .isLength({ min: 6 })
       .withMessage('Passwort muss mindestens 6 Zeichen lang sein'),
+    body('customerPrice')
+      .isNumeric()
+      .withMessage('Kundenpreis muss eine Zahl sein'),
   ],
-  registerUser
+  registerCustomer
 );
 
-// Benutzer-Login
+// Kunden-Login
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('Ungültige E-Mail'),
+    body('name').notEmpty().withMessage('Name ist erforderlich'),
     body('password').notEmpty().withMessage('Passwort ist erforderlich'),
   ],
-  loginUser
+  loginCustomer
 );
-
-// Benutzerprofil (nur für eingeloggte Benutzer)
-router.get('/profile', protect, getUserProfile);
 
 module.exports = router;

@@ -1,34 +1,32 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const Customer = require('../models/Customer'); // Das Customer-Modell
 
-// Middleware zum Schutz von Routen
 const protect = async (req, res, next) => {
-    let token;
+  let token;
 
-    if (
-        req.headers.authorization &&
-        req.headers.authorization.startsWith('Bearer')
-    ) {
-        try {
-            // Token aus den Headers extrahieren
-            token = req.headers.authorization.split(' ')[1];
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      // Token extrahieren
+      token = req.headers.authorization.split(' ')[1];
 
-            // Token verifizieren
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Token verifizieren
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Benutzer aus der Datenbank anhand der ID aus dem Token abrufen, ohne das Passwortfeld
-            req.user = await User.findById(decoded.id).select('-password');
-
-            next();
-        } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: 'Nicht autorisiert, Token fehlgeschlagen' });
-        }
+      // Kunde aus der Datenbank holen
+      req.customer = await Customer.findById(decoded.id).select('-password'); // Passwort weglassen
+      next();
+    } catch (error) {
+      console.error('Nicht autorisiert, Token ungültig');
+      res.status(401).json({ message: 'Nicht autorisiert' });
     }
+  }
 
-    if (!token) {
-        res.status(401).json({ message: 'Nicht autorisiert, kein Token vorhanden' });
-    }
+  if (!token) {
+    res.status(401).json({ message: 'Kein Token, Zugriff verweigert' });
+  }
 };
 
 module.exports = { protect };

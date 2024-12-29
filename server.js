@@ -44,6 +44,10 @@ app.get('/', (req, res) => {
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
 
+// Kunden-Routen
+const customerRoutes = require('./routes/customerRoutes');
+app.use('/api/customers', customerRoutes);
+
 // Benutzer-Routen
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
