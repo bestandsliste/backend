@@ -1,8 +1,11 @@
 const express = require('express');
-const { createOrder, getOrders } = require('../controllers/orderController');
+const {
+  createOrder,
+  getOrderByLink,
+} = require('../controllers/orderController');
 const router = express.Router();
 
-router.post('/', createOrder); // Route für Bestellungserstellung
-router.get('/', getOrders); // Route für Abrufen von Bestellungen
+router.post('/', createOrder); // Bestellung erstellen
+router.get('/:link', getOrderByLink); // Bestellung mit uniqueLink abrufen
 
 module.exports = router;

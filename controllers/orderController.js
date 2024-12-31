@@ -1,32 +1,25 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { v4: uuidv4 } = require('uuid'); // Für die Generierung eines einmaligen Links
 
 exports.createOrder = async (req, res) => {
   try {
-    const { products, customerId } = req.body;
+    const { products, customerId, customerName } = req.body;
 
-    // Validierung der Produkte
+    // Validierung der Eingabedaten
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: 'Products are required.' });
     }
 
-    // Optional: Kundeninformationen laden, wenn eine ID übergeben wurde
-    let customer = null;
-    let customerName = 'Gast';
-    if (customerId) {
-      customer = await Customer.findById(customerId); // Stelle sicher, dass `Customer` importiert ist
-      if (customer) {
-        customerName = customer.name;
-      }
-    }
-
-    // Produkte validieren und Gesamtpreis berechnen
+    // Verarbeite Produkte und berechne den Gesamtpreis
+    let totalPrice = 0;
     const populatedProducts = await Promise.all(
       products.map(async (item) => {
-        const product = await Product.findById(item.product);
+        const product = await Product.findById(item.product); // Produkt abrufen
         if (!product) {
           throw new Error(`Product with ID ${item.product} not found.`);
         }
+        totalPrice += product.price * item.quantity; // Preis * Menge
         return {
           product: product._id,
           quantity: item.quantity,
@@ -34,30 +27,50 @@ exports.createOrder = async (req, res) => {
       })
     );
 
-    const totalPrice = populatedProducts.reduce((sum, item) => {
-      const product = item.product;
-      return sum + product.price * item.quantity; // Preis * Menge
-    }, 0);
+    // Einmaligen Link generieren
+    const uniqueLink = uuidv4();
 
     // Bestellung erstellen
     const order = new Order({
       products: populatedProducts,
       totalPrice,
-      customerId: customer ? customer._id : null, // Null für Gastbestellungen
-      customerName, // Speichere Kundenname oder "Gast"
+      customerId: customerId || null,
+      customerName: customerName || 'Gast', // Standard: "Gast"
+      uniqueLink,
     });
 
     await order.save();
 
-    res.status(201).json({ message: 'Order created successfully.', order });
+    res.status(201).json({
+      message: 'Order created successfully.',
+      uniqueLink: `${process.env.FRONTEND_URL}/order/${uniqueLink}`,
+    });
   } catch (error) {
     console.error('Error creating order:', error);
-    res
-      .status(500)
-      .json({
-        message: 'An error occurred while creating the order.',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'An error occurred while creating the order.',
+      error: error.message,
+    });
+  }
+};
+
+// Bestelldetails basierend auf uniqueLink abrufen
+exports.getOrderByLink = async (req, res) => {
+  try {
+    const { link } = req.params;
+    const order = await Order.findOne({ uniqueLink: link }).populate(
+      'products.product'
+    );
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found.' });
+    }
+    res.status(200).json(order);
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({
+      message: 'An error occurred while fetching the order.',
+      error: error.message,
+    });
   }
 };
 
