@@ -5,15 +5,22 @@ exports.createOrder = async (req, res) => {
   try {
     const { products, customerId } = req.body;
 
-    // Validierung der Eingabedaten
+    // Validierung der Produkte
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: 'Products are required.' });
     }
-    if (!customerId) {
-      return res.status(400).json({ message: 'Customer ID is required.' });
+
+    // Optional: Kundeninformationen laden, wenn eine ID übergeben wurde
+    let customer = null;
+    let customerName = 'Gast';
+    if (customerId) {
+      customer = await Customer.findById(customerId); // Stelle sicher, dass `Customer` importiert ist
+      if (customer) {
+        customerName = customer.name;
+      }
     }
 
-    // Konvertiere product IDs in ObjectIds
+    // Produkte validieren und Gesamtpreis berechnen
     const populatedProducts = await Promise.all(
       products.map(async (item) => {
         const product = await Product.findById(item.product);
@@ -27,17 +34,17 @@ exports.createOrder = async (req, res) => {
       })
     );
 
-    // Berechne den Gesamtpreis
     const totalPrice = populatedProducts.reduce((sum, item) => {
       const product = item.product;
-      return sum + product.price * item.quantity; // Produktpreis * Menge
+      return sum + product.price * item.quantity; // Preis * Menge
     }, 0);
 
     // Bestellung erstellen
     const order = new Order({
       products: populatedProducts,
       totalPrice,
-      customerId,
+      customerId: customer ? customer._id : null, // Null für Gastbestellungen
+      customerName, // Speichere Kundenname oder "Gast"
     });
 
     await order.save();
@@ -62,11 +69,9 @@ exports.getOrders = async (req, res) => {
     res.status(200).json(orders);
   } catch (error) {
     console.error('Error fetching orders:', error);
-    res
-      .status(500)
-      .json({
-        message: 'An error occurred while fetching orders.',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'An error occurred while fetching orders.',
+      error: error.message,
+    });
   }
 };
