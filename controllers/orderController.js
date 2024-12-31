@@ -5,6 +5,8 @@ exports.createOrder = async (req, res) => {
   const { products, customerId } = req.body;
 
   try {
+    console.log('Eingehende Bestellung:', { products, customerId }); // Log eingehender Daten
+
     let customer = null;
     let customerName = 'Gast';
     let totalPrice = 0;
@@ -12,6 +14,7 @@ exports.createOrder = async (req, res) => {
     if (customerId) {
       const User = require('../models/User');
       customer = await User.findById(customerId);
+      console.log('Gefundener Kunde:', customer); // Log Kundendaten
       if (customer) {
         customerName = customer.name;
       }
@@ -19,6 +22,7 @@ exports.createOrder = async (req, res) => {
 
     // Berechne Gesamtpreis
     for (const item of products) {
+      console.log('Produkt:', item); // Log jedes Produkt
       let price = item.product.price;
       if (customer) {
         price = customer.customerPrice;
@@ -26,11 +30,11 @@ exports.createOrder = async (req, res) => {
       totalPrice += price * item.quantity;
     }
 
-    const { v4: uuidv4 } = require('uuid');
+    console.log('Gesamtpreis:', totalPrice); // Log den Gesamtpreis
 
-    // Verwende `uuidv4()` für das Generieren einer eindeutigen ID
     const uniqueLink = uuidv4();
 
+    // Erstelle Bestellung
     const order = await Order.create({
       customer: customer ? customer._id : null,
       customerName,
@@ -39,12 +43,15 @@ exports.createOrder = async (req, res) => {
       uniqueLink,
     });
 
+    console.log('Erstellte Bestellung:', order); // Log die erstellte Bestellung
+
     res.status(201).json({
       message: 'Bestellung erstellt',
       uniqueLink: `${process.env.FRONTEND_URL}/order/${uniqueLink}`,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Serverfehler' });
+    console.error('Fehler beim Erstellen der Bestellung:', error); // Log Fehler
+    res.status(500).json({ message: 'Serverfehler', error: error.message });
   }
 };
 
