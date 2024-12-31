@@ -1,26 +1,16 @@
 const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
-const orderSchema = new mongoose.Schema({
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null,
-  }, // Für eingeloggte Kunden
-  customerName: { type: String, required: true }, // Kundenname (oder "Gast" bei Gästen)
+const orderSchema = new Schema({
   products: [
     {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true,
-      }, // Produkt-Referenz
-      quantity: { type: Number, required: true }, // Anzahl
+      product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+      quantity: { type: Number, required: true },
     },
   ],
-  totalPrice: { type: Number, required: true }, // Gesamtpreis
-  uniqueLink: { type: String, required: true, unique: true }, // Link zur Bestellung
-  shippingInfo: { type: String, default: 'Versandkosten exklusive' }, // Versandkostenhinweis
-  createdAt: { type: Date, default: Date.now }, // Erstellungsdatum
+  totalPrice: { type: Number, required: true },
+  customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
+  createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = model('Order', orderSchema);
