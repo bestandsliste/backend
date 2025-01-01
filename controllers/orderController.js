@@ -7,28 +7,31 @@ exports.createOrder = async (req, res) => {
   try {
     const { products, customerId, customerName } = req.body;
 
+    // Validierung der Eingabedaten
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: 'Products are required.' });
     }
 
-    let totalPrice = 0;
-
     // Produkte validieren und Gesamtpreis berechnen
+    let totalPrice = 0;
     const populatedProducts = await Promise.all(
       products.map(async (item) => {
-        const product = await Product.findById(item.product);
+        const product = await Product.findById(item.product); // Produkt suchen
         if (!product) {
           throw new Error(`Product with ID ${item.product} not found.`);
         }
-        totalPrice += product.price * item.quantity; // Preis * Menge
-        return { product: product._id, quantity: item.quantity };
+        totalPrice += product.price * item.quantity; // Preis * Menge berechnen
+        return {
+          product: product._id,
+          quantity: item.quantity,
+        };
       })
     );
 
-    // Eindeutigen Link generieren
+    // Einmaligen Link generieren
     const uniqueLink = uuidv4();
 
-    // Bestellung erstellen und speichern
+    // Bestellung erstellen
     const order = new Order({
       products: populatedProducts,
       totalPrice,
@@ -45,7 +48,10 @@ exports.createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating order:', error);
-    res.status(500).json({ message: 'An error occurred while creating the order.', error: error.message });
+    res.status(500).json({
+      message: 'An error occurred while creating the order.',
+      error: error.message,
+    });
   }
 };
 
@@ -53,13 +59,20 @@ exports.createOrder = async (req, res) => {
 exports.getOrderByLink = async (req, res) => {
   try {
     const { link } = req.params;
-    const order = await Order.findOne({ uniqueLink: link }).populate('products.product');
+    const order = await Order.findOne({ uniqueLink: link }).populate(
+      'products.product'
+    );
     if (!order) {
       return res.status(404).json({ message: 'Order not found.' });
     }
     res.status(200).json(order);
   } catch (error) {
     console.error('Error fetching order:', error);
-    res.status(500).json({ message: 'An error occurred while fetching the order.', error: error.message });
+    res
+      .status(500)
+      .json({
+        message: 'An error occurred while fetching the order.',
+        error: error.message,
+      });
   }
 };
